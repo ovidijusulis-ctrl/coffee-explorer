@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coffee Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f7f5f2;
+            --text: #1a1a1a;
+            --text-dim: #666;
+            --text-muted: #999;
+            --accent: #8b7355;
+            --accent-light: #a8907a;
+            --success: #4a7c59;
+            --custom: #7c6c8a;
+
+            --espresso: #2c1810;
+            --crema: #c9a66b;
+            --milk: #f5efe6;
+            --milk-dark: #e8e0d4;
+            --foam: #fdfcfa;
+            --water: #d8e8f4;
+            --chocolate: #3d2515;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'DM Sans', 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        .jp { font-family: 'Noto Sans JP', sans-serif; }
+
+        /* ==================== LAYOUT ==================== */
+        .app {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem 1rem;
+            width: 100%;
+        }
+
+        /* ==================== DRINK INFO ==================== */
+        .drink-info {
+            text-align: center;
+            padding-bottom: 0.75rem;
+        }
+
+        .match-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 10px;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .match-badge.exact {
+            background: var(--success);
+            color: white;
+        }
+
+        .match-badge.close {
+            background: var(--accent);
+            color: white;
+        }
+
+        .match-badge.custom {
+            background: var(--custom);
+            color: white;
+        }
+
+        .drink-name {
+            font-size: 1.5rem;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            transition: all 0.3s ease;
+        }
+
+        .drink-name.custom-mode {
+            color: var(--custom);
+        }
+
+        .drink-name-jp {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        .drink-desc {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+            line-height: 1.5;
+            min-height: 2.2em;
+        }
+
+        .drink-meta {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.4rem;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .drink-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        /* ==================== GLASS ==================== */
+        .glass-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+        }
+
+        .glass-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.35s cubic-bezier(0.4, 1.3, 0.6, 1);
+        }
+
+        .glass {
+            width: 100px;
+            height: 150px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,246,243,0.85) 100%);
+            border-radius: 6px 6px 35% 35%;
+            box-shadow:
+                0 20px 40px rgba(0,0,0,0.1),
+                0 8px 16px rgba(0,0,0,0.05),
+                inset 2px 2px 8px rgba(255,255,255,0.8),
+                inset 0 0 0 1px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 1.3, 0.6, 1);
+        }
+
+        .glass.size-tiny { width: 50px; height: 65px; border-radius: 4px 4px 30% 30%; }
+        .glass.size-small { width: 60px; height: 80px; border-radius: 4px 4px 32% 32%; }
+        .glass.size-medium { width: 80px; height: 115px; border-radius: 5px 5px 33% 33%; }
+        .glass.size-large { width: 100px; height: 150px; }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 8%;
+            left: 10%;
+            width: 18%;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, transparent 100%);
+            border-radius: 50%;
+            filter: blur(2px);
+            z-index: 10;
+        }
+
+        .size-label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin-top: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            opacity: 0.7;
+        }
+
+        .layer {
+            position: absolute;
+            left: 0;
+            right: 0;
+            transition: all 0.35s cubic-bezier(0.4, 1.3, 0.6, 1);
+        }
+
+        .layer-chocolate { background: linear-gradient(180deg, #5c3a24 0%, var(--chocolate) 100%); }
+        .layer-espresso { background: linear-gradient(180deg, var(--crema) 0%, #3d2317 12%, var(--espresso) 100%); }
+        .layer-water { background: linear-gradient(180deg, var(--water) 0%, #c4dced 100%); }
+        .layer-milk { background: linear-gradient(180deg, var(--milk) 0%, var(--milk-dark) 100%); }
+        .layer-foam { background: linear-gradient(180deg, var(--foam) 0%, #f0ede8 100%); box-shadow: inset 0 -2px 6px rgba(0,0,0,0.02); }
+
+        /* ==================== SLIDERS ==================== */
+        .sliders {
+            padding: 0.75rem 0;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-row:last-child { margin-bottom: 0; }
+
+        .slider-label {
+            width: 85px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .slider-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .slider-track {
+            flex: 1;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .slider-bg {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0,0,0,0.06);
+            border-radius: 2px;
+        }
+
+        .slider-fill {
+            position: absolute;
+            left: 0;
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.1s;
+        }
+
+        .slider-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+            cursor: pointer;
+            touch-action: pan-y;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 2px solid var(--text);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.15s;
+        }
+
+        .slider-input::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .slider-input:active::-webkit-slider-thumb { cursor: grabbing; }
+
+        .slider-value {
+            width: 32px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* ==================== DRINK BUTTONS ==================== */
+        .presets {
+            padding: 0.75rem 0 0.5rem;
+        }
+
+        .presets-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            text-align: center;
+        }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+        }
+
+        .drink-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0.25rem;
+            border: 2px solid transparent;
+            background: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drink-btn::before {
+            content: 'TAP';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 0.45rem;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .drink-btn:hover::before {
+            opacity: 0.6;
+        }
+
+        .drink-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            border-color: var(--accent-light);
+        }
+
+        .drink-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .drink-btn.active {
+            border-color: var(--success);
+            background: linear-gradient(to bottom, #f0f7f2, #fff);
+            box-shadow: 0 4px 12px rgba(74, 124, 89, 0.2);
+        }
+
+        .drink-btn.active::after {
+            content: '✓';
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            font-size: 0.6rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .drink-btn.active::before {
+            display: none;
+        }
+
+        /* Mini cup preview */
+        .mini-cup {
+            width: 24px;
+            height: 32px;
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,238,235,0.9) 100%);
+            border-radius: 2px 2px 8px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.04);
+            overflow: hidden;
+            margin-bottom: 0.35rem;
+            transition: all 0.3s ease;
+        }
+
+        .mini-cup.size-tiny { width: 14px; height: 18px; border-radius: 1px 1px 5px 5px; }
+        .mini-cup.size-small { width: 16px; height: 22px; border-radius: 1px 1px 6px 6px; }
+        .mini-cup.size-medium { width: 20px; height: 28px; border-radius: 2px 2px 7px 7px; }
+
+        .mini-layer {
+            position: absolute;
+            left: 0;
+            right: 0;
+        }
+
+        .mini-layer.chocolate { background: var(--chocolate); }
+        .mini-layer.espresso { background: linear-gradient(180deg, var(--crema) 0%, var(--espresso) 30%); }
+        .mini-layer.water { background: var(--water); }
+        .mini-layer.milk { background: var(--milk-dark); }
+        .mini-layer.foam { background: var(--foam); }
+
+        .drink-btn-name {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .drink-btn-jp {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+            margin-top: 0.1rem;
+        }
+
+        .drink-btn.active .drink-btn-name {
+            color: var(--success);
+        }
+
+        /* ==================== EDUCATIONAL TIP ==================== */
+        .edu-tip {
+            text-align: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(139, 115, 85, 0.08);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .edu-tip.custom-mode {
+            background: rgba(124, 108, 138, 0.1);
+        }
+
+        .edu-tip-text {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .edu-tip-text strong {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .edu-tip.custom-mode .edu-tip-text strong {
+            color: var(--custom);
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-height: 680px) {
+            .app { padding: 0.75rem 1.25rem 0.5rem; }
+            .drink-name { font-size: 1.3rem; }
+            .glass-area { min-height: 120px; }
+            .glass.size-large { width: 80px; height: 120px; }
+            .glass.size-medium { width: 65px; height: 95px; }
+            .glass.size-small { width: 50px; height: 65px; }
+            .glass.size-tiny { width: 40px; height: 52px; }
+            .slider-row { margin-bottom: 0.5rem; }
+            .mini-cup { width: 20px; height: 26px; }
+            .mini-cup.size-tiny { width: 12px; height: 15px; }
+            .mini-cup.size-small { width: 14px; height: 18px; }
+            .mini-cup.size-medium { width: 17px; height: 23px; }
+            .edu-tip { padding: 0.4rem 0.6rem; margin-top: 0.3rem; }
+        }
+
+        @media (min-height: 800px) {
+            .glass-area { min-height: 200px; }
+            .glass.size-large { width: 110px; height: 165px; }
+            .glass.size-medium { width: 90px; height: 130px; }
+            .glass.size-small { width: 70px; height: 90px; }
+            .glass.size-tiny { width: 55px; height: 72px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- Drink Info -->
+    <div class="drink-info">
+        <div class="match-badge exact" id="matchBadge">Classic Recipe</div>
+        <h1 class="drink-name" id="drinkName">Caffè Latte</h1>
+        <p class="drink-name-jp jp" id="drinkNameJp">カフェラテ</p>
+        <p class="drink-desc" id="drinkDesc">Espresso with lots of steamed milk and thin foam (~240ml)</p>
+        <div class="drink-meta">
+            <span id="shotInfo">☕ 1 shot</span>
+            <span id="sizeInfo">📐 ~240ml</span>
+        </div>
+    </div>
+
+    <!-- Glass -->
+    <div class="glass-area">
+        <div class="glass-container">
+            <div class="glass size-large" id="glass">
+                <div class="layer layer-chocolate" id="layerChocolate"></div>
+                <div class="layer layer-espresso" id="layerEspresso"></div>
+                <div class="layer layer-water" id="layerWater"></div>
+                <div class="layer layer-milk" id="layerMilk"></div>
+                <div class="layer layer-foam" id="layerFoam"></div>
+            </div>
+            <div class="size-label" id="sizeLabel">Large cup</div>
+        </div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="sliders">
+        <div class="slider-row">
+            <div class="slider-label">
+                <span class="slider-dot" style="background: linear-gradient(135deg, var(--crema), var(--espresso));"></span>
+                Espresso
+            </div>
+            <div class="slider-track">
+                <div class="slider-bg"></div>
+                <div class="slider-fill" id="fillE" style="background: linear-gradient(90deg, var(--crema), var(--espresso));"></div>
+                <input type="range" class="slider-input" id="sliderE" min="0" max="100" value="15">
+            </div>
+            <div class="slider-value" id="valE">15%</div>
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-label">
+                <span class="slider-dot" style="background: var(--milk);"></span>
+                Milk
+            </div>
+            <div class="slider-track">
+                <div class="slider-bg"></div>
+                <div class="slider-fill" id="fillM" style="background: linear-gradient(90deg, var(--milk-dark), var(--milk));"></div>
+                <input type="range" class="slider-input" id="sliderM" min="0" max="100" value="75">
+            </div>
+            <div class="slider-value" id="valM">75%</div>
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-label">
+                <span class="slider-dot" style="background: var(--foam); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);"></span>
+                Foam
+            </div>
+            <div class="slider-track">
+                <div class="slider-bg"></div>
+                <div class="slider-fill" id="fillF" style="background: #eee;"></div>
+                <input type="range" class="slider-input" id="sliderF" min="0" max="100" value="10">
+            </div>
+            <div class="slider-value" id="valF">10%</div>
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-label">
+                <span class="slider-dot" style="background: var(--water);"></span>
+                Water
+            </div>
+            <div class="slider-track">
+                <div class="slider-bg"></div>
+                <div class="slider-fill" id="fillW" style="background: var(--water);"></div>
+                <input type="range" class="slider-input" id="sliderW" min="0" max="100" value="0">
+            </div>
+            <div class="slider-value" id="valW">0%</div>
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-label">
+                <span class="slider-dot" style="background: var(--chocolate);"></span>
+                Chocolate
+            </div>
+            <div class="slider-track">
+                <div class="slider-bg"></div>
+                <div class="slider-fill" id="fillC" style="background: linear-gradient(90deg, #5c3a24, var(--chocolate));"></div>
+                <input type="range" class="slider-input" id="sliderC" min="0" max="100" value="0">
+            </div>
+            <div class="slider-value" id="valC">0%</div>
+        </div>
+    </div>
+
+    <!-- Drink Buttons -->
+    <div class="presets">
+        <p class="presets-label">☕ Tap a drink to see how it's made</p>
+        <div class="presets-grid" id="presetsGrid">
+            <!-- Buttons generated by JS -->
+        </div>
+    </div>
+
+    <!-- Educational Tip -->
+    <div class="edu-tip" id="eduTip">
+        <p class="edu-tip-text" id="eduTipText">
+            <strong>Latte</strong> = lots of milk with a little espresso. Perfect for those who prefer a milder coffee taste!
+        </p>
+    </div>
+</div>
+
+<script>
+// ==================== COFFEE DATA ====================
+const drinks = {
+    espresso: {
+        name: 'Espresso', jp: 'エスプレッソ',
+        desc: 'Pure concentrated coffee — bold and intense',
+        tip: '<strong>Espresso</strong> is the foundation of all coffee drinks. Just 30ml of pure, concentrated coffee!',
+        r: { e: 100, m: 0, f: 0, w: 0, c: 0 },
+        size: 'tiny', shots: 1, ml: 30
+    },
+    doppio: {
+        name: 'Doppio', jp: 'ドッピオ',
+        desc: 'Double espresso — twice the intensity',
+        tip: '<strong>Doppio</strong> means "double" in Italian. Two shots of espresso for extra strength!',
+        r: { e: 100, m: 0, f: 0, w: 0, c: 0 },
+        size: 'small', shots: 2, ml: 60
+    },
+    americano: {
+        name: 'Americano', jp: 'アメリカーノ',
+        desc: 'Espresso diluted with hot water — smooth and light',
+        tip: '<strong>Americano</strong> was invented for Americans who found espresso too strong. Water softens the intensity!',
+        r: { e: 25, m: 0, f: 0, w: 75, c: 0 },
+        size: 'large', shots: 1, ml: 240
+    },
+    cortado: {
+        name: 'Cortado', jp: 'コルタード',
+        desc: 'Espresso "cut" with equal warm milk',
+        tip: '<strong>Cortado</strong> means "cut" in Spanish. The milk cuts through the espresso\'s intensity!',
+        r: { e: 50, m: 50, f: 0, w: 0, c: 0 },
+        size: 'small', shots: 1, ml: 60
+    },
+    latte: {
+        name: 'Caffè Latte', jp: 'カフェラテ',
+        desc: 'Espresso with lots of steamed milk and thin foam',
+        tip: '<strong>Latte</strong> = lots of milk with a little espresso. Perfect for those who prefer a milder coffee taste!',
+        r: { e: 15, m: 75, f: 10, w: 0, c: 0 },
+        size: 'large', shots: 1, ml: 240
+    },
+    cappuccino: {
+        name: 'Cappuccino', jp: 'カプチーノ',
+        desc: 'Equal parts espresso, steamed milk, and thick foam',
+        tip: '<strong>Cappuccino</strong> has equal thirds: espresso, milk, and foam. The foam is the star!',
+        r: { e: 33, m: 33, f: 34, w: 0, c: 0 },
+        size: 'medium', shots: 1, ml: 150
+    },
+    flatwhite: {
+        name: 'Flat White', jp: 'フラットホワイト',
+        desc: 'Double shot with velvety microfoam — strong and smooth',
+        tip: '<strong>Flat White</strong> from Australia/NZ — stronger than latte with silky microfoam, not fluffy foam!',
+        r: { e: 40, m: 55, f: 5, w: 0, c: 0 },
+        size: 'medium', shots: 2, ml: 150
+    },
+    mocha: {
+        name: 'Mocha', jp: 'モカ',
+        desc: 'Espresso + chocolate + steamed milk + foam',
+        tip: '<strong>Mocha</strong> = coffee meets hot chocolate. A sweet treat for chocolate lovers!',
+        r: { e: 15, m: 55, f: 10, w: 0, c: 20 },
+        size: 'large', shots: 1, ml: 240
+    }
+};
+
+// ==================== ELEMENTS ====================
+const sE = document.getElementById('sliderE');
+const sM = document.getElementById('sliderM');
+const sF = document.getElementById('sliderF');
+const sW = document.getElementById('sliderW');
+const sC = document.getElementById('sliderC');
+
+const fE = document.getElementById('fillE');
+const fM = document.getElementById('fillM');
+const fF = document.getElementById('fillF');
+const fW = document.getElementById('fillW');
+const fC = document.getElementById('fillC');
+
+const vE = document.getElementById('valE');
+const vM = document.getElementById('valM');
+const vF = document.getElementById('valF');
+const vW = document.getElementById('valW');
+const vC = document.getElementById('valC');
+
+const lE = document.getElementById('layerEspresso');
+const lM = document.getElementById('layerMilk');
+const lF = document.getElementById('layerFoam');
+const lW = document.getElementById('layerWater');
+const lC = document.getElementById('layerChocolate');
+
+const nameEl = document.getElementById('drinkName');
+const jpEl = document.getElementById('drinkNameJp');
+const descEl = document.getElementById('drinkDesc');
+const glassEl = document.getElementById('glass');
+const sizeLabelEl = document.getElementById('sizeLabel');
+const shotInfoEl = document.getElementById('shotInfo');
+const sizeInfoEl = document.getElementById('sizeInfo');
+const matchBadgeEl = document.getElementById('matchBadge');
+const eduTipEl = document.getElementById('eduTip');
+const eduTipTextEl = document.getElementById('eduTipText');
+const presetsGrid = document.getElementById('presetsGrid');
+
+// ==================== GENERATE DRINK BUTTONS ====================
+function createMiniCup(recipe, size) {
+    const { e, m, f, w, c } = recipe;
+    const total = e + m + f + w + c || 1;
+    const max = 75; // percentage of cup to fill
+    const scale = max / total;
+
+    let html = `<div class="mini-cup size-${size}">`;
+
+    // Build layers from bottom to top
+    let bottom = 10; // start a bit from bottom
+
+    if (c > 0) {
+        const h = c * scale;
+        html += `<div class="mini-layer chocolate" style="bottom:${bottom}%;height:${h}%"></div>`;
+        bottom += h;
+    }
+    if (e > 0) {
+        const h = e * scale;
+        html += `<div class="mini-layer espresso" style="bottom:${bottom}%;height:${h}%"></div>`;
+        bottom += h;
+    }
+    if (w > 0) {
+        const h = w * scale;
+        html += `<div class="mini-layer water" style="bottom:${bottom}%;height:${h}%"></div>`;
+        bottom += h;
+    }
+    if (m > 0) {
+        const h = m * scale;
+        html += `<div class="mini-layer milk" style="bottom:${bottom}%;height:${h}%"></div>`;
+        bottom += h;
+    }
+    if (f > 0) {
+        const h = f * scale;
+        html += `<div class="mini-layer foam" style="bottom:${bottom}%;height:${h}%"></div>`;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function generateButtons() {
+    let html = '';
+    for (const [key, d] of Object.entries(drinks)) {
+        html += `
+            <button class="drink-btn${key === 'latte' ? ' active' : ''}" data-d="${key}">
+                ${createMiniCup(d.r, d.size)}
+                <span class="drink-btn-name">${d.name.replace('Caffè ', '')}</span>
+                <span class="drink-btn-jp jp">${d.jp}</span>
+            </button>
+        `;
+    }
+    presetsGrid.innerHTML = html;
+
+    // Add click events
+    document.querySelectorAll('.drink-btn').forEach(btn => {
+        btn.addEventListener('click', () => setDrink(btn.dataset.d));
+    });
+}
+
+// ==================== SIZE HELPERS ====================
+function getSizeLabel(size) {
+    switch(size) {
+        case 'tiny': return 'Espresso cup · ~30ml';
+        case 'small': return 'Small cup · ~60ml';
+        case 'medium': return 'Medium cup · ~150ml';
+        case 'large': return 'Large cup · ~240ml';
+        default: return '';
+    }
+}
+
+// ==================== UPDATE ====================
+function update() {
+    const e = +sE.value, m = +sM.value, f = +sF.value, w = +sW.value, c = +sC.value;
+
+    // Update slider fills
+    fE.style.width = e + '%';
+    fM.style.width = m + '%';
+    fF.style.width = f + '%';
+    fW.style.width = w + '%';
+    fC.style.width = c + '%';
+
+    // Update slider values
+    vE.textContent = e + '%';
+    vM.textContent = m + '%';
+    vF.textContent = f + '%';
+    vW.textContent = w + '%';
+    vC.textContent = c + '%';
+
+    // Update glass layers
+    const total = e + m + f + w + c || 1;
+    const max = 82;
+    const scale = max / total;
+
+    const hE = e * scale, hM = m * scale, hF = f * scale, hW = w * scale, hC = c * scale;
+
+    let bottom = 0;
+    lC.style.height = hC + '%'; lC.style.bottom = bottom + '%'; bottom += hC;
+    lE.style.height = hE + '%'; lE.style.bottom = bottom + '%'; bottom += hE;
+    lW.style.height = hW + '%'; lW.style.bottom = bottom + '%'; bottom += hW;
+    lM.style.height = hM + '%'; lM.style.bottom = bottom + '%'; bottom += hM;
+    lF.style.height = hF + '%'; lF.style.bottom = bottom + '%';
+
+    // Find best matching drink
+    let best = null, bestDiff = Infinity;
+    for (const [k, d] of Object.entries(drinks)) {
+        const diff = Math.abs(d.r.e - e) + Math.abs(d.r.m - m) + Math.abs(d.r.f - f) + Math.abs(d.r.w - w) + Math.abs(d.r.c - c);
+        if (diff < bestDiff) { bestDiff = diff; best = k; }
+    }
+
+    const drink = drinks[best];
+    const isEmpty = total === 0 || (e === 0 && m === 0 && f === 0 && w === 0 && c === 0);
+    const isInvalidWater = w > 50 && e === 0;
+
+    let displayName, displayJp, displayDesc, displaySize, displayShots, displayMl, displayTip;
+    let matchType = 'custom';
+
+    if (isEmpty) {
+        displayName = 'Empty Cup';
+        displayJp = '空のカップ';
+        displayDesc = 'Add some ingredients to create a drink!';
+        displayTip = 'Start by adding some <strong>espresso</strong> — it\'s the base of every coffee drink!';
+        displaySize = 'large';
+        displayShots = 0;
+        displayMl = 0;
+    } else if (isInvalidWater) {
+        displayName = 'Hot Water';
+        displayJp = 'お湯';
+        displayDesc = 'Just water — not quite coffee yet!';
+        displayTip = 'Try adding some <strong>espresso</strong> to turn this into an Americano!';
+        displaySize = 'large';
+        displayShots = 0;
+        displayMl = 240;
+    } else if (bestDiff < 12) {
+        // Exact match
+        matchType = 'exact';
+        displayName = drink.name;
+        displayJp = drink.jp;
+        displayDesc = drink.desc;
+        displayTip = drink.tip;
+        displaySize = drink.size;
+        displayShots = drink.shots;
+        displayMl = drink.ml;
+    } else if (bestDiff < 35) {
+        // Close match
+        matchType = 'close';
+        displayName = '≈ ' + drink.name;
+        displayJp = drink.jp;
+        displayDesc = 'Close to ' + drink.name.toLowerCase() + ' — adjust sliders to match exactly!';
+        displayTip = 'You\'re close to making a <strong>' + drink.name + '</strong>! ' + drink.tip.replace(/<strong>.*?<\/strong>/, 'It');
+        displaySize = drink.size;
+        displayShots = drink.shots;
+        displayMl = drink.ml;
+    } else {
+        // Custom blend
+        displayName = 'Custom Blend';
+        displayJp = 'オリジナル';
+        displayDesc = 'Your own unique creation!';
+
+        // Generate helpful tip based on composition
+        if (e === 0) {
+            displayTip = 'No espresso? Add some to make it a real coffee drink!';
+        } else if (m + f > 60 && e < 20) {
+            displayTip = 'Very milky! You\'re in <strong>Latte</strong> territory. Try more foam for a Cappuccino!';
+        } else if (w > 30 && e > 0) {
+            displayTip = 'Water + espresso = <strong>Americano</strong> style! Adjust proportions to taste.';
+        } else if (c > 30) {
+            displayTip = 'Lots of chocolate! You\'re making something like a <strong>Mocha</strong>.';
+        } else if (e > 50) {
+            displayTip = 'Strong espresso base! This is similar to a <strong>Cortado</strong> or <strong>Flat White</strong>.';
+        } else {
+            displayTip = 'Interesting mix! Try tapping a drink button to see classic recipes.';
+        }
+
+        // Infer size
+        const espressoRatio = e / total;
+        if (espressoRatio >= 0.8) {
+            displaySize = e > 60 ? 'small' : 'tiny';
+            displayShots = e > 60 ? 2 : 1;
+            displayMl = e > 60 ? 60 : 30;
+        } else if (espressoRatio >= 0.35) {
+            displaySize = 'medium';
+            displayShots = espressoRatio > 0.35 ? 2 : 1;
+            displayMl = 150;
+        } else {
+            displaySize = 'large';
+            displayShots = 1;
+            displayMl = 240;
+        }
+    }
+
+    // Update display
+    nameEl.textContent = displayName;
+    nameEl.classList.toggle('custom-mode', matchType === 'custom');
+    jpEl.textContent = displayJp;
+    descEl.textContent = displayDesc;
+
+    // Update match badge
+    if (matchType === 'exact') {
+        matchBadgeEl.textContent = '✓ Classic Recipe';
+        matchBadgeEl.className = 'match-badge exact';
+    } else if (matchType === 'close') {
+        matchBadgeEl.textContent = '≈ Almost There';
+        matchBadgeEl.className = 'match-badge close';
+    } else {
+        matchBadgeEl.textContent = '✦ Your Creation';
+        matchBadgeEl.className = 'match-badge custom';
+    }
+
+    // Update glass
+    glassEl.className = 'glass size-' + displaySize;
+    sizeLabelEl.textContent = getSizeLabel(displaySize);
+
+    // Update meta
+    if (displayShots === 0) {
+        shotInfoEl.textContent = '☕ No espresso';
+    } else {
+        shotInfoEl.textContent = '☕ ' + displayShots + ' shot' + (displayShots > 1 ? 's' : '');
+    }
+    sizeInfoEl.textContent = displayMl > 0 ? '📐 ~' + displayMl + 'ml' : '';
+
+    // Update educational tip
+    eduTipEl.classList.toggle('custom-mode', matchType === 'custom');
+    eduTipTextEl.innerHTML = displayTip;
+
+    // Update active button
+    document.querySelectorAll('.drink-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.d === best && matchType === 'exact');
+    });
+}
+
+function setDrink(key) {
+    const d = drinks[key];
+    if (!d) return;
+    animate(sE, d.r.e);
+    animate(sM, d.r.m);
+    animate(sF, d.r.f);
+    animate(sW, d.r.w);
+    animate(sC, d.r.c);
+}
+
+function animate(slider, target) {
+    const start = +slider.value;
+    const diff = target - start;
+    const duration = 400;
+    const startTime = performance.now();
+
+    function step(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        slider.value = Math.round(start + diff * ease);
+        update();
+        if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+// ==================== INIT ====================
+[sE, sM, sF, sW, sC].forEach(s => s.addEventListener('input', update));
+generateButtons();
+update();
+</script>
+
+</body>
+</html>

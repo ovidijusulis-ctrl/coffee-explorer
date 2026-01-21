@@ -1,0 +1,11 @@
+{
+  "name": "coffee-explorer",
+  "version": "1.0.0",
+  "description": "Interactive coffee drink explorer - learn how coffee drinks are made",
+  "scripts": {
+    "start": "npx serve -s . -l $PORT"
+  },
+  "keywords": ["coffee", "education", "interactive"],
+  "author": "Masato Cafe",
+  "license": "MIT"
+}
