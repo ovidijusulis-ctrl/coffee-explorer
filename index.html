@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Coffee Explorer</title>
+    <title>the; coffee explorer</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
@@ -475,6 +475,162 @@
             .glass.size-small { width: 70px; height: 90px; }
             .glass.size-tiny { width: 55px; height: 72px; }
         }
+
+        /* ==================== REVIEW BOTTOM SHEET ==================== */
+        .review-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .review-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .review-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 101;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        }
+
+        .review-overlay.active .review-sheet {
+            transform: translateY(0);
+        }
+
+        .review-sheet-handle {
+            width: 36px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 0 auto 1rem;
+        }
+
+        .review-content {
+            text-align: center;
+        }
+
+        .review-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .review-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        .thumbs-container {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .thumb-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 2px solid #eee;
+            background: #fafafa;
+            font-size: 1.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumb-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .thumb-btn.thumb-up:hover {
+            border-color: var(--success);
+            background: #f0f7f2;
+        }
+
+        .thumb-btn.thumb-down:hover {
+            border-color: #d9534f;
+            background: #fdf2f2;
+        }
+
+        .review-cta-btn {
+            display: block;
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            margin-bottom: 0.75rem;
+        }
+
+        .review-cta-btn:hover {
+            background: #3367d6;
+            transform: translateY(-1px);
+        }
+
+        .review-cta-btn::before {
+            content: '⭐ ';
+        }
+
+        .review-later-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            font-family: inherit;
+        }
+
+        .review-later-btn:hover {
+            color: var(--text-dim);
+        }
+
+        .review-phase-1,
+        .review-phase-2 {
+            display: none;
+        }
+
+        .review-phase-1.active,
+        .review-phase-2.active {
+            display: block;
+        }
+
+        .thank-you-msg {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -590,6 +746,32 @@
     </div>
 </div>
 
+<!-- Review Bottom Sheet -->
+<div class="review-overlay" id="reviewOverlay">
+    <div class="review-sheet">
+        <div class="review-sheet-handle"></div>
+
+        <!-- Phase 1: Thumbs up/down -->
+        <div class="review-content review-phase-1 active" id="reviewPhase1">
+            <p class="review-title jp">コーヒーの作り方、参考になりましたか？</p>
+            <p class="review-subtitle">Was this guide helpful?</p>
+            <div class="thumbs-container">
+                <button class="thumb-btn thumb-up" id="thumbUp">👍</button>
+                <button class="thumb-btn thumb-down" id="thumbDown">👎</button>
+            </div>
+        </div>
+
+        <!-- Phase 2: Review prompt (if thumbs up) -->
+        <div class="review-content review-phase-2" id="reviewPhase2">
+            <p class="review-title jp">ありがとうございます！</p>
+            <p class="review-subtitle">よろしければ、Googleマップでお店の感想を教えてください。<br>他のお客様の参考になります。</p>
+            <button class="review-cta-btn" id="reviewBtn">Googleマップでレビュー</button>
+            <button class="review-later-btn" id="reviewLater">あとで / Later</button>
+            <p class="thank-you-msg">Thank you for your support!</p>
+        </div>
+    </div>
+</div>
+
 <script>
 // ==================== COFFEE DATA ====================
 const drinks = {
@@ -630,10 +812,10 @@ const drinks = {
     },
     cappuccino: {
         name: 'Cappuccino', jp: 'カプチーノ',
-        desc: 'Equal parts espresso, steamed milk, and thick foam',
+        desc: 'Equal parts espresso, steamed milk, and thick foam (~240ml)',
         tip: '<strong>Cappuccino</strong> has equal thirds: espresso, milk, and foam. The foam is the star!',
         r: { e: 33, m: 33, f: 34, w: 0, c: 0 },
-        size: 'medium', shots: 1, ml: 150
+        size: 'large', shots: 1, ml: 240
     },
     flatwhite: {
         name: 'Flat White', jp: 'フラットホワイト',
@@ -949,6 +1131,175 @@ function animate(slider, target) {
 [sE, sM, sF, sW, sC].forEach(s => s.addEventListener('input', update));
 generateButtons();
 update();
+
+// ==================== REVIEW SYSTEM ====================
+const STORAGE_KEY = 'coffeeExplorer_userState';
+const PLACE_ID = 'PLACEHOLDER_PLACE_ID'; // Replace with actual Place ID
+const REVIEW_URL = `https://search.google.com/local/writereview?placeid=${PLACE_ID}`;
+
+// Default state
+const defaultState = {
+    visits: 0,
+    interactions: 0,
+    hasReviewed: false,
+    isDismissed: false,
+    dismissedAt: 0,
+    firstVisitTime: Date.now()
+};
+
+// State management
+function getState() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? { ...defaultState, ...JSON.parse(stored) } : { ...defaultState };
+    } catch (e) {
+        return { ...defaultState };
+    }
+}
+
+function saveState(state) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        // localStorage not available (incognito, etc.)
+    }
+}
+
+// Initialize state on load
+function initState() {
+    const state = getState();
+    if (state.visits === 0) {
+        state.firstVisitTime = Date.now();
+    }
+    state.visits++;
+    saveState(state);
+}
+
+// Track interactions (sliders and drink buttons)
+function trackInteraction() {
+    const state = getState();
+    state.interactions++;
+    saveState(state);
+    checkReviewTrigger();
+}
+
+// Check if we should show review prompt
+function shouldShowPrompt() {
+    const state = getState();
+    const now = Date.now();
+    const THIRTY_SECONDS = 30 * 1000;
+    const FOURTEEN_DAYS = 14 * 24 * 60 * 60 * 1000;
+
+    // Already reviewed? Never show again
+    if (state.hasReviewed) return false;
+
+    // Dismissed recently? Wait 14 days
+    if (state.isDismissed && (now - state.dismissedAt < FOURTEEN_DAYS)) {
+        return false;
+    }
+
+    // Minimum engagement: 3+ interactions
+    if (state.interactions < 3) return false;
+
+    // Minimum time: 30+ seconds in app
+    if (now - state.firstVisitTime < THIRTY_SECONDS) return false;
+
+    return true;
+}
+
+// Trigger check after interactions
+let promptShownThisSession = false;
+function checkReviewTrigger() {
+    if (promptShownThisSession) return;
+    if (shouldShowPrompt()) {
+        // Small delay so it doesn't feel jarring
+        setTimeout(showReviewSheet, 500);
+        promptShownThisSession = true;
+    }
+}
+
+// Review sheet elements
+const reviewOverlay = document.getElementById('reviewOverlay');
+const reviewPhase1 = document.getElementById('reviewPhase1');
+const reviewPhase2 = document.getElementById('reviewPhase2');
+const thumbUp = document.getElementById('thumbUp');
+const thumbDown = document.getElementById('thumbDown');
+const reviewBtn = document.getElementById('reviewBtn');
+const reviewLater = document.getElementById('reviewLater');
+
+function showReviewSheet() {
+    reviewOverlay.classList.add('active');
+    reviewPhase1.classList.add('active');
+    reviewPhase2.classList.remove('active');
+}
+
+function hideReviewSheet() {
+    reviewOverlay.classList.remove('active');
+}
+
+// Thumbs up - show review prompt
+thumbUp.addEventListener('click', () => {
+    reviewPhase1.classList.remove('active');
+    reviewPhase2.classList.add('active');
+});
+
+// Thumbs down - just close (intercept negative feedback)
+thumbDown.addEventListener('click', () => {
+    const state = getState();
+    state.isDismissed = true;
+    state.dismissedAt = Date.now();
+    saveState(state);
+    hideReviewSheet();
+});
+
+// Review button - open Google Maps
+reviewBtn.addEventListener('click', () => {
+    const state = getState();
+    state.hasReviewed = true;
+    saveState(state);
+    window.open(REVIEW_URL, '_blank');
+    hideReviewSheet();
+});
+
+// Later button
+reviewLater.addEventListener('click', () => {
+    const state = getState();
+    state.isDismissed = true;
+    state.dismissedAt = Date.now();
+    saveState(state);
+    hideReviewSheet();
+});
+
+// Close on overlay click
+reviewOverlay.addEventListener('click', (e) => {
+    if (e.target === reviewOverlay) {
+        const state = getState();
+        state.isDismissed = true;
+        state.dismissedAt = Date.now();
+        saveState(state);
+        hideReviewSheet();
+    }
+});
+
+// Track slider interactions
+[sE, sM, sF, sW, sC].forEach(s => {
+    s.addEventListener('change', trackInteraction);
+});
+
+// Track drink button clicks (modify existing event listener setup)
+const originalGenerateButtons = generateButtons;
+generateButtons = function() {
+    originalGenerateButtons();
+    document.querySelectorAll('.drink-btn').forEach(btn => {
+        btn.addEventListener('click', trackInteraction);
+    });
+};
+
+// Re-run to add tracking
+generateButtons();
+
+// Initialize
+initState();
 </script>
 
 </body>
